@@ -6,9 +6,9 @@ const server = require('http').createServer(app);
 const wss = new WebSocket.Server({ server });
 
 // JWT密钥
-const JWT_SECRET = 'your-secret-key';
+const JWT_SECRET = 'cH9L!vZ2Y@5bT4lU6rF0zX7wQ8pD3rG';
 // 必须和客户端的API_KEY一致
-const API_KEY = 'you-apiKey-Password';
+const API_KEY = 'T&9jF#pL7rQz!2mXkV@1BzUo0LxW';
 
 // 存储连接的客户端
 const connectedClients = new Map(); // 使用Map来存储多个客户端
