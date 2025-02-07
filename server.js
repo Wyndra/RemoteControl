@@ -5,13 +5,16 @@ const app = express();
 const server = require('http').createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// JWT密钥
-const JWT_SECRET = 'cH9L!vZ2Y@5bT4lU6rF0zX7wQ8pD3rG';
+// JWT密钥,尽量复杂
+const JWT_SECRET = 'you-jwt-secret';
+
 // 必须和客户端的API_KEY一致
 const API_KEY = 'T&9jF#pL7rQz!2mXkV@1BzUo0LxW';
+// 客户端密钥,需运行客户端代码后在config.json中查看
 
 // 存储连接的客户端
 const connectedClients = new Map(); // 使用Map来存储多个客户端
+const clientSecrets = new Map(); // 存储客户端的动态密钥
 
 // WebSocket连接处理
 wss.on('connection', (ws, req) => {
@@ -102,7 +105,7 @@ const authenticateToken = (req, res, next) => {
 
 // 获取JWT token的接口
 app.post('/auth', (req, res) => {
-    const { apiKey, clientId } = req.body;
+    const { apiKey, clientId, dynamicSecret } = req.body;
     
     if (apiKey !== API_KEY) {
         return res.status(401).json({ error: '无效的API密钥' });
@@ -111,6 +114,9 @@ app.post('/auth', (req, res) => {
     if (!clientId) {
         return res.status(400).json({ error: '缺少clientId' });
     }
+
+    // 存储客户端的动态密钥
+    clientSecrets.set(clientId, dynamicSecret);
 
     const token = jwt.sign({ 
         authorized: true,
@@ -128,10 +134,15 @@ app.get('/clients', authenticateToken, (req, res) => {
 
 // 执行命令的接口（添加认证）
 app.post('/execute', authenticateToken, (req, res) => {
-    const { command, clientId } = req.body;
+    const { command, clientId, dynamicSecret } = req.body;
     
     if (!command) {
         return res.status(400).json({ error: '缺少command参数' });
+    }
+
+    // 验证客户端的动态密钥
+    if (clientSecrets.get(clientId) !== dynamicSecret) {
+        return res.status(403).json({ error: '无效的动态密钥!请重新运行客户端进行获取' });
     }
 
     // 如果指定了clientId，则发送到特定客户端
@@ -140,6 +151,12 @@ app.post('/execute', authenticateToken, (req, res) => {
         if (!client) {
             return res.status(404).json({ error: `客户端 ${clientId} 未连接` });
         }
+        // 判断只有来自authenticateToken中间件的用户才能操作自己的clientId
+        jwt.verify(req.headers['authorization'].split(' ')[1], JWT_SECRET, (err, user) => {
+            if (err || user.clientId !== clientId) {
+                return res.status(403).json({ error: '无权操作该clientId' });
+            }
+        });
         client.send(JSON.stringify({ type: 'command', command }));
         return res.json({ message: `命令已发送到客户端 ${clientId}` });
     }
@@ -163,4 +180,4 @@ app.post('/execute', authenticateToken, (req, res) => {
 const PORT = 3080;
 server.listen(PORT, () => {
     console.log(`服务器运行在端口 ${PORT}`);
-}); 
+});

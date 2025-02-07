@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken'); // 引入jsonwebtoken库以解析token
+const crypto = require('crypto'); // 引入crypto库以生成动态密钥
 
 // 使用动态导入fetch
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -75,6 +76,9 @@ function getOrCreateConfig() {
 // 加载配置
 const CONFIG = getOrCreateConfig();
 
+// 动态生成的密钥
+const dynamicSecret = crypto.randomBytes(16).toString('hex');
+
 let wsClient = null;
 let isConnected = false;
 let pingTimeout = null;
@@ -85,6 +89,8 @@ let currentRetryInterval = CONFIG.intervals.initialRetry;
 async function getToken() {
     try {
         log('正在获取认证token...');
+        log(`客户端ID: ${CONFIG.clientId}`);
+        log(`动态密钥: ${dynamicSecret}`);
         const response = await fetch(`http://${CONFIG.serverUrl}/auth`, {
             method: 'POST',
             headers: {
@@ -92,7 +98,9 @@ async function getToken() {
             },
             body: JSON.stringify({ 
                 apiKey: CONFIG.apiKey,
-                clientId: CONFIG.clientId 
+                clientId: CONFIG.clientId,
+                clientSecret: CONFIG.clientSecret, // 发送客户端密钥字段
+                dynamicSecret: dynamicSecret // 发送动态密钥字段
             })
         });
         const data = await response.json();

@@ -72,7 +72,7 @@ node server.js
 {
   "clientId": "client-0103u6r6i",
   "serverUrl": "hz.srcandy.top:3080",
-  "apiKey": "Bwzdc6530.",
+  "apiKey": "T&9jF#pL7rQz!2mXkV@1BzUo0LxW",
   "intervals": {
     "check": 10000,
     "ping": 10000,
@@ -83,7 +83,7 @@ node server.js
 } 
 ```
 ##### 使用公共服务
-我们提供了`hz.srcandy.top:3080`的远程WebSocket服务，你可以直接使用该服务，无需自行搭建服务端，但是需要配置高强度的`apiKey`和`clientId`，以免被恶意攻击。
+我们提供了`hz.srcandy.top:3080`的远程WebSocket服务，你可以直接运行该服务，无需自行搭建服务端，妥善保管你的dynamicSecret，以免被他人恶意使用。
 
 ## API 接口
 
@@ -97,7 +97,8 @@ node server.js
 ```json
 {
     "apiKey": "your-api-key",
-    "clientId": "your-client-id"
+    "clientId": "your-client-id",
+    "dynamicSecret": "your-dynamic-secret"
 }
 ```
 
@@ -125,7 +126,7 @@ node server.js
 
 ### 执行命令
 
-向指定的客户端或所有连接的客户端执行命令。可以通过 `clientId` 来指定目标客户端，也可以不指定来广播命令到所有客户端。
+向指定的客户端发送命令进行执行，服务器会校验客户端是否和token信息匹配，如果匹配则执行命令。
 
 - **请求方式**：`POST /execute`
 - **请求体**：
@@ -133,7 +134,8 @@ node server.js
 ```json
 {
     "command": "your-command",
-    "clientId": "client1"  // 可选，如果不指定则广播到所有客户端
+    "clientId": "client1",
+    "dynamicSecret": "your-dynamic-secret"
 }
 ```
 
