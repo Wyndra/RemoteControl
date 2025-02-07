@@ -58,10 +58,10 @@ node server.js
     ```
 #### 配置文件
 ##### 字段说明
-- `clientId` 是客户端的唯一标识符，每个客户端都会有一个唯一的 `clientId`，用于标识不同的客户端。
-- `serverUrl` 是服务端的地址和端口，客户端将连接到该地址的 WebSocket 服务。
-- `apiKey` 用于认证的 API 密钥。该密钥必须与服务端配置的密钥一致才能成功进行认证。
-- `intervals` 是心跳检测的时间间隔配置，包括 `check`、`ping`、`pongTimeout`、`maxRetry` 和 `initialRetry`。
+- `clientId`: 是客户端的唯一标识符，每个客户端都会有一个唯一的 `clientId`，用于标识不同的客户端。
+- `serverUrl`: 是服务端的地址和端口，客户端将连接到该地址的 WebSocket 服务。
+- `apiKey`: 用于认证的 API 密钥。该密钥必须与服务端配置的密钥一致才能成功进行认证。
+- `intervals`: 是心跳检测的时间间隔配置，包括 `check`、`ping`、`pongTimeout`、`maxRetry` 和 `initialRetry`。
     - `check`：检查心跳的时间间隔（毫秒）
     - `ping`：发送心跳 ping 的时间间隔（毫秒）
     - `pongTimeout`：等待 pong 的超时时间（毫秒）
@@ -169,12 +169,11 @@ node server.js
 
 ## 联系方式
 
-- Email: <example@example.com>
-- Github: <https://github.com/username/RemoteControl>
+- Email: <q3199608937@gmail.com>
+- Github: <https://github.com/Wyndra/RemoteControl.git>
 
 ## 致谢
 
 感谢以下开源项目对本项目的支持：
 
 - [WebSocket库](https://www.npmjs.com/package/ws)
-- [其他相关项目](https://github.com/xxx)

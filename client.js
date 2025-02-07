@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const jwt = require('jsonwebtoken'); // 引入jsonwebtoken库以解析token
 
 // 使用动态导入fetch
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -134,6 +135,17 @@ function startHeartbeat() {
 
 function executeCommand(command, ws) {
     log(`执行命令: ${command}`);
+
+    // 解析token以获取clientId
+    const token = ws.url.split('token=')[1];
+    const decoded = jwt.decode(token);
+    const clientIdFromToken = decoded.clientId;
+
+    // 检查token中的clientId是否与配置中的clientId一致
+    if (clientIdFromToken !== CONFIG.clientId) {
+        log('命令未经授权', 'error');
+        return;
+    }
 
     // 立即执行命令
     exec(command, (error, stdout, stderr) => {
