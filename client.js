@@ -2,7 +2,6 @@ const WebSocket = require('ws');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const noble = require('@abandonware/noble'); // 引入noble库以支持蓝牙
 
 // 使用动态导入fetch
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -82,60 +81,6 @@ let lastPongTime = Date.now();
 let reconnectTimer = null;
 let currentRetryInterval = CONFIG.intervals.initialRetry;
 
-// 蓝牙相关变量
-let bluetoothDevice = null;
-let bluetoothCharacteristic = null;
-
-// 扫描并连接蓝牙设备
-function scanAndConnectBluetooth() {
-    noble.on('stateChange', async (state) => {
-        if (state === 'poweredOn') {
-            log('开始扫描蓝牙设备...');
-            noble.startScanning();
-        } else {
-            noble.stopScanning();
-        }
-    });
-
-    noble.on('discover', async (peripheral) => {
-        log(`发现蓝牙设备: ${peripheral.advertisement.localName}`);
-        if (peripheral.advertisement.localName === 'YourBluetoothDeviceName') {
-            noble.stopScanning();
-            bluetoothDevice = peripheral;
-            bluetoothDevice.connect((error) => {
-                if (error) {
-                    log(`连接蓝牙设备失败: ${error.message}`, 'error');
-                    return;
-                }
-                log('成功连接蓝牙设备');
-                bluetoothDevice.discoverSomeServicesAndCharacteristics([], ['your-characteristic-uuid'], (error, services, characteristics) => {
-                    if (error) {
-                        log(`发现服务和特征失败: ${error.message}`, 'error');
-                        return;
-                    }
-                    bluetoothCharacteristic = characteristics[0];
-                    log('成功发现蓝牙特征');
-                });
-            });
-        }
-    });
-}
-
-// 通过蓝牙发送命令
-function sendCommandViaBluetooth(command) {
-    if (bluetoothCharacteristic) {
-        bluetoothCharacteristic.write(Buffer.from(command), false, (error) => {
-            if (error) {
-                log(`通过蓝牙发送命令失败: ${error.message}`, 'error');
-            } else {
-                log('通过蓝牙发送命令成功');
-            }
-        });
-    } else {
-        log('蓝牙特征未找到，无法发送命令', 'error');
-    }
-}
-
 async function getToken() {
     try {
         log('正在获取认证token...');
@@ -153,7 +98,6 @@ async function getToken() {
         if (!data.token) {
             throw new Error('获取token失败');
         }
-        log(`成功获取token (ClientID: ${CONFIG.clientId})`);
         return data.token;
     } catch (error) {
         log(`获取token失败: ${error.message}`, 'error');
@@ -190,6 +134,8 @@ function startHeartbeat() {
 
 function executeCommand(command, ws) {
     log(`执行命令: ${command}`);
+
+    // 立即执行命令
     exec(command, (error, stdout, stderr) => {
         const response = {
             command,
@@ -200,8 +146,6 @@ function executeCommand(command, ws) {
 
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(response));
-        } else {
-            sendCommandViaBluetooth(JSON.stringify(response));
         }
 
         if (error) {
@@ -291,7 +235,6 @@ async function connectWebSocket() {
             clearTimeout(pingTimeout);
             log(`⚠️ 与服务器断开连接 (代码: ${code}, 原因: ${reason})`, 'error');
             scheduleReconnect();
-            scanAndConnectBluetooth(); // 服务器断开时启动蓝牙扫描
         });
 
         wsClient.on('error', (error) => {
@@ -303,7 +246,6 @@ async function connectWebSocket() {
         isConnected = false;
         log(`连接失败: ${error.message}`, 'error');
         scheduleReconnect();
-        scanAndConnectBluetooth(); // 连接失败时启动蓝牙扫描
     }
 }
 

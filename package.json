@@ -9,10 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@abandonware/noble": "^1.9.2-25",
     "child_process": "^1.0.2",
     "express": "^4.21.2",
     "http": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
+    "noble": "^1.9.1",
     "node-fetch": "^2.7.0",
     "ws": "^8.18.0"
   }
