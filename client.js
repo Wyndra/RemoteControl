@@ -30,7 +30,7 @@ function log(message, type = 'info') {
 const DEFAULT_CONFIG = {
     clientId: 'client-' + Math.random().toString(36).substr(2, 9),
     serverUrl: 'hz.srcandy.top:3080',
-    apiKey: 'Bwzdc6530.',
+    apiKey: 'you-apiKey-Password',
     intervals: {
         check: 10000,    // 检查间隔
         ping: 10000,     // ping间隔
