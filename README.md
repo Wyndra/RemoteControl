@@ -61,6 +61,7 @@ node server.js
 - `clientId`: 是客户端的唯一标识符，每个客户端都会有一个唯一的 `clientId`，用于标识不同的客户端。
 - `serverUrl`: 是服务端的地址和端口，客户端将连接到该地址的 WebSocket 服务。
 - `apiKey`: 用于认证的 API 密钥。该密钥必须与服务端配置的密钥一致才能成功进行认证。
+- `clientSecret`: 是客户端的动态密钥，用于身份认证，确保只有授权的客户端可以连接到 WebSocket 服务。
 - `intervals`: 是心跳检测的时间间隔配置，包括以下字段：
     - `check`：检查心跳的时间间隔（毫秒）
     - `ping`：发送心跳 ping 的时间间隔（毫秒）
@@ -70,9 +71,10 @@ node server.js
 ##### 示例配置文件
 ```json
 {
-  "clientId": "client-0103u6r6i",
+  "clientId": "client-0103u6r6i", // 自动生成
   "serverUrl": "hz.srcandy.top:3080",
   "apiKey": "T&9jF#pL7rQz!2mXkV@1BzUo0LxW",
+  "clientSecret": "your-client-secret", // 自动生成
   "intervals": {
     "check": 10000,
     "ping": 10000,
@@ -83,7 +85,7 @@ node server.js
 } 
 ```
 ##### 使用公共服务
-我们提供了`hz.srcandy.top:3080`的远程WebSocket服务，你可以直接运行该服务，无需自行搭建服务端，妥善保管你的dynamicSecret，以免被他人恶意使用。
+我们提供了`hz.srcandy.top:3080`的远程WebSocket服务，你可以直接运行该服务，无需自行搭建服务端，妥善保管你的clientSecret，以免被他人恶意使用。
 
 ## API 接口
 
@@ -98,7 +100,7 @@ node server.js
 {
     "apiKey": "your-api-key",
     "clientId": "your-client-id",
-    "dynamicSecret": "your-dynamic-secret"
+    "clientSecret": "your-dynamic-secret"
 }
 ```
 
@@ -135,7 +137,7 @@ node server.js
 {
     "command": "your-command",
     "clientId": "client1",
-    "dynamicSecret": "your-dynamic-secret"
+    "clientSecret": "your-client-secret"
 }
 ```
 
