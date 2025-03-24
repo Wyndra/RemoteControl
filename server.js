@@ -5,6 +5,24 @@ const app = express();
 const server = require('http').createServer(app);
 const wss = new WebSocket.Server({ server });
 
+function timestampToTime(times) {
+    let time = times[1]
+    let mdy = times[0]
+    mdy = mdy.split('/')
+    let month = parseInt(mdy[0]);
+    let day = parseInt(mdy[1]);
+    let year = parseInt(mdy[2])
+    return year + '-' + month + '-' + day + ' ' + time
+}
+
+// 日志函数
+function log(message, type = 'info') {
+    let time = new Date()
+    let nowTime = timestampToTime(time.toLocaleString('en-US', { hour12: false }).split(" "))
+    const prefix = type === 'error' ? '❌ ERROR' : '✅ INFO';
+    console.log(`[${nowTime}] ${prefix}: ${message}`);
+}
+
 // JWT密钥,尽量复杂
 const JWT_SECRET = 'you-jwt-secret';
 
@@ -28,7 +46,7 @@ wss.on('connection', (ws, req) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         const clientId = decoded.clientId || 'unknown'; // 从token中获取clientId
-        console.log(`客户端 ${clientId} 已认证并连接`);
+        log(`客户端 ${clientId} 已认证并连接`);
         
         // 存储客户端连接
         connectedClients.set(clientId, ws);
@@ -48,21 +66,21 @@ wss.on('connection', (ws, req) => {
         ws.on('message', (message) => {
             try {
                 const response = JSON.parse(message);
-                console.log(`收到来自客户端 ${clientId} 的响应:`, response);
+                log(`收到来自客户端 ${clientId} 的响应:${response}`);
             } catch (error) {
-                console.error('解析消息失败:', error);
+                log(`收到来自客户端 ${clientId} 的无效消息:${error}`, "error");
             }
         });
 
         ws.on('close', () => {
-            console.log(`客户端 ${clientId} 断开连接`);
+            log(`客户端 ${clientId} 断开连接`);
             connectedClients.delete(clientId);
         });
 
         // 设置连接超时检查
         const interval = setInterval(() => {
             if (ws.isAlive === false) {
-                console.log(`客户端 ${clientId} 响应超时，关闭连接`);
+                log(`客户端 ${clientId} 未响应，关闭连接`);
                 clearInterval(interval);
                 connectedClients.delete(clientId);
                 return ws.terminate();
