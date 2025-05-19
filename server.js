@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 const app = express();
 const server = require('http').createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -33,6 +34,7 @@ const API_KEY = 'T&9jF#pL7rQz!2mXkV@1BzUo0LxW';
 // 存储连接的客户端
 const connectedClients = new Map(); // 使用Map来存储多个客户端
 const clientSecrets = new Map(); // 存储客户端的客户端密钥
+const pendingCommands = new Map(); // requestId -> { resolve, reject, timeout }
 
 // WebSocket连接处理
 wss.on('connection', (ws, req) => {
@@ -68,6 +70,15 @@ wss.on('connection', (ws, req) => {
                 const response = JSON.parse(message);
                 log(`收到来自客户端 ${clientId} 的响应:`);
                 console.log(response)
+                // 新增：处理命令执行结果
+                if (response.type === 'commandResult' && response.requestId) {
+                    const pending = pendingCommands.get(response.requestId);
+                    if (pending) {
+                        clearTimeout(pending.timeout);
+                        pending.resolve(response.result);
+                        pendingCommands.delete(response.requestId);
+                    }
+                }
             } catch (error) {
                 log(`收到来自客户端 ${clientId} 的无效消息:${error}`, "error");
             }
@@ -152,7 +163,7 @@ app.get('/clients', authenticateToken, (req, res) => {
 });
 
 // 执行命令的接口（添加认证）
-app.post('/execute', authenticateToken, (req, res) => {
+app.post('/execute', authenticateToken, async (req, res) => {
     const { command, clientId, clientSecret } = req.body;
     
     if (!command) {
@@ -171,13 +182,26 @@ app.post('/execute', authenticateToken, (req, res) => {
             return res.status(404).json({ error: `客户端 ${clientId} 未连接` });
         }
         // 判断只有来自authenticateToken中间件的用户才能操作自己的clientId
-        jwt.verify(req.headers['authorization'].split(' ')[1], JWT_SECRET, (err, user) => {
-            if (err || user.clientId !== clientId) {
+        try {
+            const user = jwt.verify(req.headers['authorization'].split(' ')[1], JWT_SECRET);
+            if (user.clientId !== clientId) {
                 return res.status(403).json({ error: '无权操作该clientId' });
             }
-        });
-        client.send(JSON.stringify({ type: 'command', command }));
-        return res.json({ message: `命令已发送到客户端 ${clientId}` });
+        } catch (err) {
+            return res.status(403).json({ error: '无效token' });
+        }
+        // 新增：生成requestId，等待结果
+        const requestId = uuidv4();
+        client.send(JSON.stringify({ type: 'command', command, requestId }));
+        // 等待客户端返回结果，超时30秒
+        const result = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                pendingCommands.delete(requestId);
+                reject(new Error('客户端执行超时'));
+            }, 30000);
+            pendingCommands.set(requestId, { resolve, reject, timeout });
+        }).catch(err => ({ error: err.message }));
+        return res.json({ clientId, result });
     }
 
     // 如果没有指定clientId，则发送到所有客户端

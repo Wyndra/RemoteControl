@@ -142,7 +142,7 @@ function startHeartbeat() {
     }
 }
 
-function executeCommand(command, ws) {
+function executeCommand(command, ws, requestId) {
     log(`执行命令: ${command}`);
 
     // 解析token以获取clientId
@@ -158,7 +158,7 @@ function executeCommand(command, ws) {
 
     // 立即执行命令
     exec(command, (error, stdout, stderr) => {
-        const response = {
+        const result = {
             command,
             success: !error,
             output: stdout || stderr,
@@ -166,7 +166,12 @@ function executeCommand(command, ws) {
         };
 
         if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(response));
+            // 如果有requestId，返回带requestId的结构
+            if (requestId) {
+                ws.send(JSON.stringify({ type: 'commandResult', requestId, result }));
+            } else {
+                ws.send(JSON.stringify(result));
+            }
         }
 
         if (error) {
@@ -244,7 +249,8 @@ async function connectWebSocket() {
                 const data = JSON.parse(message);
                 if (data.type === 'command') {
                     log(`收到命令: ${data.command}`);
-                    executeCommand(data.command, wsClient);
+                    // 传递requestId给executeCommand
+                    executeCommand(data.command, wsClient, data.requestId);
                 }
             } catch (error) {
                 log(`解析消息失败: ${error.message}`, 'error');
