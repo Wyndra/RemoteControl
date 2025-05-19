@@ -66,7 +66,8 @@ wss.on('connection', (ws, req) => {
         ws.on('message', (message) => {
             try {
                 const response = JSON.parse(message);
-                log(`收到来自客户端 ${clientId} 的响应:${response}`);
+                log(`收到来自客户端 ${clientId} 的响应:`);
+                console.log(response)
             } catch (error) {
                 log(`收到来自客户端 ${clientId} 的无效消息:${error}`, "error");
             }
