@@ -164,8 +164,9 @@ app.get('/clients', authenticateToken, (req, res) => {
 
 // 执行命令的接口（添加认证）
 app.post('/execute', authenticateToken, async (req, res) => {
-    const { command, clientId, clientSecret } = req.body;
-    
+    // timeout是为了防止请求过长，pendingCommands会在timeout毫秒后超时
+    let { command, clientId, clientSecret, timeout } = req.body;
+    timeout = Number(timeout) || 30000;
     if (!command) {
         return res.status(400).json({ error: '缺少command参数' });
     }
@@ -193,31 +194,31 @@ app.post('/execute', authenticateToken, async (req, res) => {
         // 新增：生成requestId，等待结果
         const requestId = uuidv4();
         client.send(JSON.stringify({ type: 'command', command, requestId }));
-        // 等待客户端返回结果，超时30秒
+        // 等待客户端返回结果，超时可动态指定
         const result = await new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
+            const timer = setTimeout(() => {
                 pendingCommands.delete(requestId);
                 reject(new Error('客户端执行超时'));
-            }, 30000);
-            pendingCommands.set(requestId, { resolve, reject, timeout });
+            }, timeout);
+            pendingCommands.set(requestId, { resolve, reject, timeout: timer });
         }).catch(err => ({ error: err.message }));
         return res.json({ clientId, result });
     }
 
     // 如果没有指定clientId，则发送到所有客户端
-    if (connectedClients.size === 0) {
-        return res.status(503).json({ error: '没有可用的客户端连接' });
-    }
+    // if (connectedClients.size === 0) {
+    //     return res.status(503).json({ error: '没有可用的客户端连接' });
+    // }
 
-    // 广播命令到所有连接的客户端
-    connectedClients.forEach((client, id) => {
-        client.send(JSON.stringify({ type: 'command', command }));
-    });
+    // // 广播命令到所有连接的客户端
+    // connectedClients.forEach((client, id) => {
+    //     client.send(JSON.stringify({ type: 'command', command }));
+    // });
 
-    res.json({ 
-        message: '命令已广播到所有客户端',
-        clientCount: connectedClients.size
-    });
+    // res.json({ 
+    //     message: '命令已广播到所有客户端',
+    //     clientCount: connectedClients.size
+    // });
 });
 
 const PORT = 3080;
