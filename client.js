@@ -100,7 +100,6 @@ async function getToken() {
             body: JSON.stringify({ 
                 apiKey: CONFIG.apiKey,
                 clientId: CONFIG.clientId,
-                clientSecret: CONFIG.clientSecret, // 发送客户端密钥字段
                 clientSecret: clientSecret // 发送客户端密钥字段
             })
         });

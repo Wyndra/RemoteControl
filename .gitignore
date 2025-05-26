@@ -2,3 +2,4 @@
 config.json
 .gitignore
 output.log
+.DS_Store

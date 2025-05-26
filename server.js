@@ -162,6 +162,8 @@ app.get('/clients', authenticateToken, (req, res) => {
     res.json({ clients });
 });
 
+
+
 // 执行命令的接口（添加认证）
 app.post('/execute', authenticateToken, async (req, res) => {
     // timeout是为了防止请求过长，pendingCommands会在timeout毫秒后超时
@@ -204,21 +206,6 @@ app.post('/execute', authenticateToken, async (req, res) => {
         }).catch(err => ({ error: err.message }));
         return res.json({ clientId, result });
     }
-
-    // 如果没有指定clientId，则发送到所有客户端
-    // if (connectedClients.size === 0) {
-    //     return res.status(503).json({ error: '没有可用的客户端连接' });
-    // }
-
-    // // 广播命令到所有连接的客户端
-    // connectedClients.forEach((client, id) => {
-    //     client.send(JSON.stringify({ type: 'command', command }));
-    // });
-
-    // res.json({ 
-    //     message: '命令已广播到所有客户端',
-    //     clientCount: connectedClients.size
-    // });
 });
 
 const PORT = 3080;
