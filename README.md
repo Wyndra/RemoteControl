@@ -1,5 +1,7 @@
 # RemoteControl
 
+[English Version (README_EN.md)](./README_EN.md)
+
 基于 WebSocket 的远程控制服务，支持通过 HTTP API 和 WebSocket 实现与客户端的远程交互。
 
 ## 背景
@@ -10,7 +12,7 @@
 
 - **WebSocket 连接**：支持通过 WebSocket 与客户端建立连接，并保持长连接进行远程控制。
 - **JWT 认证**：通过 JWT（JSON Web Token）认证机制，确保只有授权的客户端可以连接到 WebSocket 服务。
-- **命令执行**：可以向指定客户端或者所有连接的客户端发送命令进行执行。
+- **命令执行**：可以向指定客户端发送命令进行执行，并获取执行结果。
 - **心跳检测**：确保 WebSocket 连接活跃，定时发送 `ping` 和接收 `pong`，超时自动断开无响应的连接。
 
 ## 安装与使用
@@ -47,34 +49,34 @@ node server.js
 ### 客户端
 
 #### 启动
+- **直接运行**
 
-* **直接运行**
-    ```bash
-    node client.js
-    ```
-* **后台运行**
-    ```bash
-    nohup node client.js > output.log 2>&1 &
-    ```
+  ```bash
+  node client.js
+  ```
+- **后台运行**
+
+  ```bash
+  nohup node client.js > output.log 2>&1 &
+  ```
+
 #### 配置文件
-##### 字段说明
-- `clientId`: 是客户端的唯一标识符，每个客户端都会有一个唯一的 `clientId`，用于标识不同的客户端。
-- `serverUrl`: 是服务端的地址和端口，客户端将连接到该地址的 WebSocket 服务。
+- `clientId`: 客户端的唯一标识符，每个客户端都会有一个唯一的 `clientId`，用于标识不同的客户端。
+- `serverUrl`: 服务端的地址和端口，客户端将连接到该地址的 WebSocket 服务。
 - `apiKey`: 用于认证的 API 密钥。该密钥必须与服务端配置的密钥一致才能成功进行认证。
-- `clientSecret`: 是客户端的动态密钥，用于身份认证，确保只有授权的客户端可以连接到 WebSocket 服务。
-- `intervals`: 是心跳检测的时间间隔配置，包括以下字段：
-    - `check`：检查心跳的时间间隔（毫秒）
-    - `ping`：发送心跳 ping 的时间间隔（毫秒）
-    - `pongTimeout`：等待 pong 的超时时间（毫秒）
-    - `maxRetry`：最大重试次数
-    - `initialRetry`：初始重试时间间隔（毫秒）
+- `intervals`: 心跳检测的时间间隔配置，包括以下字段：
+  - `check`：检查心跳的时间间隔（毫秒）
+  - `ping`：发送心跳 ping 的时间间隔（毫秒）
+  - `pongTimeout`：等待 pong 的超时时间（毫秒）
+  - `maxRetry`：最大重试间隔（毫秒）
+  - `initialRetry`：初始重试时间间隔（毫秒）
+
 ##### 示例配置文件
 ```json
 {
-  "clientId": "client-0103u6r6i", // 自动生成
+  "clientId": "client-0103u6r6i",
   "serverUrl": "hz.srcandy.top:3080",
   "apiKey": "T&9jF#pL7rQz!2mXkV@1BzUo0LxW",
-  "clientSecret": "your-client-secret", // 自动生成
   "intervals": {
     "check": 10000,
     "ping": 10000,
@@ -82,10 +84,8 @@ node server.js
     "maxRetry": 30000,
     "initialRetry": 5000
   }
-} 
+}
 ```
-##### 使用公共服务
-我们提供了`hz.srcandy.top:3080`的远程WebSocket服务，你可以直接运行该服务，无需自行搭建服务端，妥善保管你的clientSecret，以免被他人恶意使用。
 
 ## API 接口
 
@@ -99,8 +99,7 @@ node server.js
 ```json
 {
     "apiKey": "your-api-key",
-    "clientId": "your-client-id",
-    "clientSecret": "your-dynamic-secret"
+    "clientId": "your-client-id"
 }
 ```
 
@@ -128,7 +127,7 @@ node server.js
 
 ### 执行命令
 
-向指定的客户端发送命令进行执行，服务器会校验客户端是否和token信息匹配，如果匹配则执行命令。
+向指定的客户端发送命令进行执行，服务器会校验客户端是否和 token 信息匹配，如果匹配则执行命令，并返回执行结果。
 
 - **请求方式**：`POST /execute`
 - **请求体**：
@@ -137,7 +136,7 @@ node server.js
 {
     "command": "your-command",
     "clientId": "client1",
-    "clientSecret": "your-client-secret"
+    "timeout": 30000 // 可选，单位毫秒，默认30000
 }
 ```
 
@@ -145,15 +144,24 @@ node server.js
 
 ```json
 {
-    "message": "命令已发送到客户端 client1"
+    "clientId": "client1",
+    "result": {
+        "command": "your-command",
+        "success": true,
+        "output": "命令输出内容",
+        "error": null
+    }
 }
 ```
 
-或者，如果没有可用客户端连接：
+- **超时示例**：
 
 ```json
 {
-    "error": "没有可用的客户端连接"
+    "clientId": "client1",
+    "result": {
+        "error": "客户端执行超时"
+    }
 }
 ```
 
@@ -181,3 +189,7 @@ node server.js
 感谢以下开源项目对本项目的支持：
 
 - [WebSocket库](https://www.npmjs.com/package/ws)
+
+---
+
+[English Version (README_EN.md)](./README_EN.md)
