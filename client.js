@@ -31,7 +31,7 @@ function log(message, type = 'info') {
 // 默认配置
 const DEFAULT_CONFIG = {
     clientId: 'client-' + Math.random().toString(36).substr(2, 9),
-    serverUrl: 'hz.srcandy.top:3080',
+    serverUrl: 'remo.srcandy.top',
     apiKey: 'T&9jF#pL7rQz!2mXkV@1BzUo0LxW',
     clientSecret: crypto.randomBytes(16).toString('hex'),
     intervals: {

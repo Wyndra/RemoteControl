@@ -77,7 +77,7 @@ Example config:
 ```json
 {
   "clientId": "client-0103u6r6i",
-  "serverUrl": "hz.srcandy.top:3080",
+  "serverUrl": "remo.srcandy.top",
   "apiKey": "T&9jF#pL7rQz!2mXkV@1BzUo0LxW",
   "intervals": {
     "check": 10000,
